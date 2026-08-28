@@ -20,6 +20,7 @@ type ApplicationInstrumentation struct {
 	Type        model.ApplicationType `json:"type"`
 	Host        string                `json:"host"`
 	Port        string                `json:"port"`
+	Sni         string                `json:"sni,omitempty"`
 	Credentials model.Credentials     `json:"credentials"`
 	Params      map[string]string     `json:"params"`
 	Instance    string                `json:"instance"`
@@ -130,6 +131,7 @@ func (c *Collector) Config(w http.ResponseWriter, r *http.Request) {
 						Type:        instrumentation.Type,
 						Host:        ip.String(),
 						Port:        instrumentation.Port,
+						Sni:         sniHostname(instrumentation, instance),
 						Credentials: instrumentation.Credentials,
 						Params:      instrumentation.Params,
 					}
@@ -145,6 +147,22 @@ func (c *Collector) Config(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJson(w, res)
+}
+
+// sniHostname returns the TLS server name (SNI) for the node-agent to use when
+// connecting to the instrumented instance. Certificates of MongoDB instances
+// with requireTLS usually don't match bare IPs, so the trusted hostname
+// reported by the node-agent telemetry of the underlying physical node is used.
+// SNI is never set for Kubernetes pods, non-MongoDB instrumentation, or
+// node-less synthetic instances.
+func sniHostname(instrumentation *model.ApplicationInstrumentation, instance *model.Instance) string {
+	if instrumentation.Type != model.ApplicationTypeMongodb {
+		return ""
+	}
+	if instance.Pod != nil || instance.Node == nil || !instance.Node.IsAgentInstalled() {
+		return ""
+	}
+	return instance.Node.Name.Value()
 }
 
 func SelectIP(ips []netaddr.IP) *netaddr.IP {
