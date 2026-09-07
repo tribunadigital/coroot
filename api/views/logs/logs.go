@@ -24,6 +24,7 @@ const (
 	viewPatterns = "patterns"
 
 	defaultLimit = 100
+	maxLimit     = 10000
 )
 
 type View struct {
@@ -82,6 +83,9 @@ func Render(ctx context.Context, ch *clickhouse.Client, app *model.Application, 
 	}
 	if q.Limit <= 0 {
 		q.Limit = defaultLimit
+	}
+	if q.Limit > maxLimit {
+		q.Limit = maxLimit
 	}
 
 	defer func() {

@@ -18,6 +18,7 @@ import (
 
 const (
 	defaultLimit = 100
+	maxLimit     = 10000
 )
 
 type Logs struct {
@@ -74,6 +75,9 @@ func renderLogs(ctx context.Context, chs clickhouse.Clients, w *model.World, que
 	}
 	if q.Limit <= 0 {
 		q.Limit = defaultLimit
+	}
+	if q.Limit > maxLimit {
+		q.Limit = maxLimit
 	}
 	lq := clickhouse.LogQuery{Ctx: w.Ctx, Limit: q.Limit}
 	var clusterFilter *clickhouse.LogFilter

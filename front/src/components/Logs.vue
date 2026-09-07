@@ -162,7 +162,7 @@ export default {
             view: {},
             refreshInterval: 0,
             query: this.makeQuery(q),
-            limits: [10, 20, 50, 100, 1000],
+            limits: [10, 20, 50, 100, 1000, 5000, 10000],
             entry: null,
             qb: {
                 loading: false,
