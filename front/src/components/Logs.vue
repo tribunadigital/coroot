@@ -303,6 +303,7 @@ export default {
                     case 'Message':
                         this.qb.items = ['contains', 'not contains'];
                         break;
+                    case 'TraceId':
                     case 'pattern.hash':
                         this.qb.items = ['='];
                         break;
