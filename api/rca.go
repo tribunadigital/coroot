@@ -90,6 +90,9 @@ func (api *Api) RCA(w http.ResponseWriter, r *http.Request, u *db.User) {
 	if cacheTo.Before(to) {
 		to = cacheTo
 	}
+	if incident != nil {
+		from, to = api.IncidentTimeContext(projectId, incident, to)
+	}
 	step := increaseStepForBigDurations(from, to, cacheStep)
 
 	rcaRequest := cloud.RCARequest{
@@ -100,9 +103,6 @@ func (api *Api) RCA(w http.ResponseWriter, r *http.Request, u *db.User) {
 		CustomCloudPricing:          project.Settings.CustomCloudPricing,
 	}
 	rcaRequest.Ctx.RawStep = cacheStep
-	if incident != nil {
-		rcaRequest.Ctx.From, rcaRequest.Ctx.To = api.IncidentTimeContext(projectId, incident, to)
-	}
 
 	if rcaRequest.CheckConfigs, err = api.db.GetCheckConfigs(project.Id); err != nil {
 		klog.Errorln(err)
@@ -272,7 +272,6 @@ func (api *Api) IncidentTimeContext(projectId db.ProjectId, incident *model.Appl
 	incidents, err := api.db.GetApplicationIncidents(projectId, from, incident.OpenedAt)
 	if err != nil {
 		klog.Errorln(err)
-		return from, to
 	}
 	for _, i := range incidents[incident.ApplicationId] {
 		if i.Key == incident.Key || !i.Resolved() {
@@ -281,6 +280,9 @@ func (api *Api) IncidentTimeContext(projectId db.ProjectId, incident *model.Appl
 		if i.ResolvedAt.After(from) && i.ResolvedAt.Before(to) {
 			from = i.ResolvedAt
 		}
+	}
+	if to.Sub(from) > MaxRCAWindow {
+		to = from.Add(MaxRCAWindow)
 	}
 	return from, to
 }
