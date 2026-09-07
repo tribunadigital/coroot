@@ -39,6 +39,7 @@ import (
 
 const (
 	MaxIncidentWindow = timeseries.Day
+	MaxRCAWindow      = 4 * timeseries.Hour
 )
 
 type LoadWorldF func(ctx context.Context, project *db.Project, from, to timeseries.Time) (*model.World, error)
