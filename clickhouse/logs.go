@@ -127,12 +127,12 @@ func (c *Client) GetLogFilters(ctx context.Context, query LogQuery, name string)
 	settings := " SETTINGS max_block_size=2048, max_threads=4"
 	switch name {
 	case "":
-		res = append(res, "Severity", "Message", "Cluster")
+		res = append(res, "Severity", "Message", "TraceId", "Cluster")
 		q = "SELECT arrayJoin(arrayConcat(mapKeys(LogAttributes), mapKeys(ResourceAttributes))) AS k"
 		orderBy = `GROUP BY 1 HAVING NOT match(k, '\\.\\d+(\\.|$)') ORDER BY count(1) DESC, 1`
 	case "Severity":
 		q = "SELECT DISTINCT multiIf(SeverityNumber=0, 0, intDiv(SeverityNumber, 4)+1)"
-	case "Message":
+	case "Message", "TraceId":
 		return res, nil
 	case "Cluster":
 		return []string{c.project.Name}, nil
